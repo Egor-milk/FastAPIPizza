@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Simple Pizza Frontend</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <style>body{font-family:Arial;padding:20px}button{margin:5px}</style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">
+      const {useState,useEffect}=React
+      function App(){
+        const [orders,setOrders]=useState([])
+        const [phone,setPhone]=useState('')
+        const [items,setItems]=useState([{menu_item_id:1,quantity:1}])
+        useEffect(()=>{fetch('/orders').then(r=>r.json()).then(setOrders)},[])
+        const create=()=>{
+          fetch('/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customer_phone:phone,items})}).then(r=>r.json()).then(o=>setOrders([o,...orders]))
+        }
+        return <div>
+          <h1>Simple Pizza POS</h1>
+          <div>
+            <h3>New order</h3>
+            <input placeholder="customer phone" value={phone} onChange={e=>setPhone(e.target.value)} />
+            <button onClick={create}>Create order</button>
+          </div>
+          <h3>Orders</h3>
+          <ul>{orders.map(o=> <li key={o.id}>#{o.id} status:{o.status} total:{o.total}</li>)}</ul>
+        </div>
+      }
+      ReactDOM.createRoot(document.getElementById('root')).render(<App />)
+    </script>
+  </body>
+</html>
