@@ -1,0 +1,6 @@
+body{font-family:Arial, sans-serif;padding:20px;background:#fafafa}
+.container{max-width:800px;margin:0 auto;background:#fff;padding:16px;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,0.05)}
+input{padding:6px 8px;margin-right:8px}
+button{padding:6px 10px;margin:5px}
+ul{list-style:none;padding-left:0}
+li{padding:6px 0;border-bottom:1px solid #eee}
