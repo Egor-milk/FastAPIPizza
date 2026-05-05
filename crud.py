@@ -35,6 +35,7 @@ def get_orders(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Order).offset(skip).limit(limit).all()
 
 def get_order(db: Session, order_id: int):
+
     stmt2 = (
     ((select(
         models.OrderItem.id,

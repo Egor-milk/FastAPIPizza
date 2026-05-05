@@ -62,6 +62,11 @@ export async function createCustomer(payload) {
   return checkJson(res, 'Failed to create customer');
 }
 
+export async function fetchOrder(id) {
+  const res = await fetch(`${API_BASE}/orders/${encodeURIComponent(id)}`);
+  return checkJson(res, 'Failed to fetch order');
+}
+
 export async function getDeliveryETA(distance_km = 5) {
   const res = await fetch(`${API_BASE}/delivery/eta?distance_km=${encodeURIComponent(distance_km)}`);
   return checkJson(res, 'Failed to get delivery ETA');

@@ -4,3 +4,8 @@ input{padding:6px 8px;margin-right:8px}
 button{padding:6px 10px;margin:5px}
 ul{list-style:none;padding-left:0}
 li{padding:6px 0;border-bottom:1px solid #eee}
+
+/* modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000}
+.modal{background:#fff;padding:16px;border-radius:6px;max-width:600px;width:90%;box-shadow:0 4px 20px rgba(0,0,0,0.2);position:relative}
+.modal-close{position:absolute;right:12px;top:8px;background:transparent;border:0;font-size:22px;cursor:pointer}

@@ -4,48 +4,60 @@ import {
   createOrder,
   fetchMenuItems,
   createMenuItem,
-  fetchInventory,
   fetchKDS,
   fetchCustomers,
   createCustomer,
-  getDeliveryETA,
+  fetchOrder,
 } from './api.js';
 
 export default function App() {
   const [orders, setOrders] = useState([]);
   const [phone, setPhone] = useState('');
-  const [items, setItems] = useState([{ menu_item_id: 1, quantity: 1 }]);
+  const [items, setItems] = useState([]);
+  const [selectedMenuId, setSelectedMenuId] = useState('');
+  const [selectedQty, setSelectedQty] = useState(1);
+  const [menu, setMenu] = useState([]);
 
-  const [menu, setMenu] = useState([]);
-  const [inventory, setInventory] = useState([]);
   const [kds, setKds] = useState([]);
   const [customers, setCustomers] = useState([]);
-
-  const [newMenuName, setNewMenuName] = useState('');
+  const [newMenuName, setNewMenuName] = useState('');
   const [newMenuPrice, setNewMenuPrice] = useState('0');
   const [newCustomerName, setNewCustomerName] = useState('');
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
-  const [eta, setEta] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
 
   useEffect(() => {
     fetchOrders().then(setOrders).catch(() => {});
     fetchMenuItems().then(setMenu).catch(()=>{});
   }, []);
 
-  const handleCreate = () => {
+  const handleAddItem = () => {
+    const id = parseInt(selectedMenuId, 10);
+    const qty = parseInt(selectedQty, 10) || 1;
+    if (!id) return;
+    setItems([...items, { menu_item_id: id, quantity: qty }]);
+    setSelectedMenuId('');
+    setSelectedQty(1);
+  };
+  const handleCreate = () => {
+    if (items.length === 0) {
+      alert('Add at least one item');
+      return;
+    }
     createOrder({ customer_phone: phone, items })
       .then((o) => {
         setOrders([o, ...orders]);
         setPhone('');
+        setItems([]);
       })
       .catch((err) => console.error(err));
   };
 
-  const loadInventory = () => fetchInventory().then(setInventory).catch(console.error);
+
   const loadKds = () => fetchKDS().then(setKds).catch(console.error);
   const loadCustomers = () => fetchCustomers().then(setCustomers).catch(console.error);
-
-  const handleCreateMenu = () => {
+  const handleCreateMenu = () => {
     const price = parseFloat(newMenuPrice) || 0;
     createMenuItem({ name: newMenuName, price })
       .then((m) => {
@@ -55,8 +67,7 @@ export default function App() {
       })
       .catch(console.error);
   };
-
-  const handleCreateCustomer = () => {
+  const handleCreateCustomer = () => {
     createCustomer({ name: newCustomerName, phone: newCustomerPhone })
       .then((c) => {
         setCustomers([c, ...customers]);
@@ -66,8 +77,17 @@ export default function App() {
       .catch(console.error);
   };
 
-  const checkEta = () => {
-    getDeliveryETA(5).then((r) => setEta(r.eta_minutes)).catch(console.error);
+  const closeModal = () => { setModalOpen(false); setSelectedOrderDetails(null); };
+  const showOrderDetails = (id) => {
+    fetchOrder(id)
+      .then((data) => {
+        setSelectedOrderDetails(data);
+        setModalOpen(true);
+      })
+      .catch((e) => {
+        console.error(e);
+        alert('Failed to load order details');
+      });
   };
 
   return (
@@ -81,6 +101,23 @@ export default function App() {
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
         />
+        <div style={{marginTop:8}}>
+          <select value={selectedMenuId} onChange={(e)=>setSelectedMenuId(e.target.value)}>
+            <option value="">-- select item --</option>
+            {menu.map(m => <option key={m.id} value={m.id}>{m.name} — {m.price}</option>)}
+          </select>
+          <input type="number" min="1" value={selectedQty} style={{width:60}} onChange={(e)=>setSelectedQty(e.target.value)} />
+          <button onClick={handleAddItem}>Add item</button>
+        </div>
+        <div style={{marginTop:8}}>
+          <strong>Items:</strong>
+          <ul>
+            {items.map((it, idx) => {
+              const m = menu.find(x=>x.id===it.menu_item_id) || {};
+              return <li key={idx}>{m.name||it.menu_item_id} x {it.quantity}</li>;
+            })}
+          </ul>
+        </div>
         <button onClick={handleCreate}>Create order</button>
       </div>
 
@@ -96,13 +133,7 @@ export default function App() {
         </ul>
       </div>
 
-      <div className="section">
-        <h3>Inventory</h3>
-        <button onClick={loadInventory}>Refresh inventory</button>
-        <ul>
-          {inventory.map(i => <li key={i.id}>{i.name}: {i.quantity}</li>)}
-        </ul>
-      </div>
+
 
       <div className="section">
         <h3>KDS (active orders)</h3>
@@ -125,20 +156,37 @@ export default function App() {
         </ul>
       </div>
 
-      <div className="section">
-        <h3>Delivery</h3>
-        <button onClick={checkEta}>Get ETA (5 km)</button>
-        {eta !== null && <div>ETA: {eta} minutes</div>}
-      </div>
+
 
       <h3>Orders</h3>
       <ul>
         {orders.map((o) => (
           <li key={o.id}>
             #{o.id} status:{o.status} total:{o.total}
+            <button style={{marginLeft:8}} onClick={()=>showOrderDetails(o.id)}>Details</button>
           </li>
         ))}
       </ul>
+
+      {modalOpen && selectedOrderDetails && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal" onClick={(e)=>e.stopPropagation()}>
+            <button className="modal-close" onClick={closeModal}>×</button>
+            <h3>Order #{selectedOrderDetails.id} details</h3>
+            <div>Status: {selectedOrderDetails.status}</div>
+            <div>Total: {selectedOrderDetails.total}</div>
+            <div>Customer phone: {selectedOrderDetails.customer_phone}</div>
+            <div>
+              Items:
+              <ul>
+                {(selectedOrderDetails.items||[]).map((it, idx)=> (
+                  <li key={idx}>{it.name || it.menu_item_id} x {it.quantity} {it.price ? ` — ${it.price}` : ''}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
