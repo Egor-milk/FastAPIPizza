@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 import models, schemas
-from sqlalchemy import select
+from sqlalchemy import select, desc
 
 def get_customers(db: Session):
     return db.query(models.Customer).all()
@@ -46,7 +46,6 @@ def get_orders(db: Session, skip: int = 0, limit: int = 100):
          )
     )
     return db.execute(stmt2).mappings().all()
-    #return db.query(models.Order).offset(skip).limit(limit).all()
 
 def get_order(db: Session, order_id: int):
 
@@ -112,6 +111,7 @@ def get_active_orders(db: Session):
             models.Customer.phone,
         )
           .join(models.Customer, models.Customer.id == models.Order.customer_id))
+         .order_by(desc(models.Order.id))
          .filter(models.Order.status.in_(['new','preparing'])))
          )
     return db.execute(stmt2).mappings().all()

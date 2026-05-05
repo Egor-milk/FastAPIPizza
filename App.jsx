@@ -31,9 +31,10 @@ export default function App() {
   const [currentTab, setCurrentTab] = useState('create');
 
   useEffect(() => {
-    fetchOrders().then(setOrders).catch(() => {});
-    fetchMenuItems().then(setMenu).catch(()=>{});
-    fetchKDS().then(setKds).catch(()=>{});
+    // explicitly use backend order as-is
+    fetchOrders().then((data) => setOrders(data)).catch(() => {});
+    fetchMenuItems().then((data) => setMenu(data)).catch(()=>{});
+    fetchKDS().then((data) => setKds(data)).catch(()=>{});
   }, []);
 
   const handleAddItem = () => {
@@ -130,33 +131,33 @@ export default function App() {
 
   return (
     <div className="container">
-      <h1>Simple Pizza POS</h1>
+      <h1>ПростоПицца</h1>
 
       <div className="tabs" style={{marginBottom:12}}>
-        <button onClick={()=>setCurrentTab('create')} className={currentTab==='create' ? 'tab-active' : ''}>Create Order</button>
-        <button onClick={()=>setCurrentTab('orders')} className={currentTab==='orders' ? 'tab-active' : ''}>Orders</button>
-        <button onClick={()=>setCurrentTab('menu')} className={currentTab==='menu' ? 'tab-active' : ''}>Menu</button>
-        <button onClick={()=>setCurrentTab('customers')} className={currentTab==='customers' ? 'tab-active' : ''}>Customers</button>
+        <button onClick={()=>setCurrentTab('create')} className={currentTab==='create' ? 'tab-active' : ''}>Создать заказ</button>
+        <button onClick={()=>setCurrentTab('orders')} className={currentTab==='orders' ? 'tab-active' : ''}>Заказы</button>
+        <button onClick={()=>setCurrentTab('menu')} className={currentTab==='menu' ? 'tab-active' : ''}>Меню</button>
+        <button onClick={()=>setCurrentTab('customers')} className={currentTab==='customers' ? 'tab-active' : ''}>Клиенты</button>
       </div>
 
       {currentTab === 'create' && (
         <div className="section">
-          <h3>New order</h3>
+          <h3>Новый заказ</h3>
           <input
-            placeholder="customer phone"
+            placeholder="телефон клиента"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
           />
           <div style={{marginTop:8}}>
             <select value={selectedMenuId} onChange={(e)=>setSelectedMenuId(e.target.value)}>
-              <option value="">-- select item --</option>
+              <option value="">-- выбрать позицию --</option>
               {menu.map(m => <option key={m.id} value={m.id}>{m.name} — {m.price}</option>)}
             </select>
             <input type="number" min="1" value={selectedQty} style={{width:60}} onChange={(e)=>setSelectedQty(e.target.value)} />
-            <button onClick={handleAddItem}>Add item</button>
+            <button onClick={handleAddItem}>Добавить позицию</button>
           </div>
           <div style={{marginTop:8}}>
-            <strong>Items:</strong>
+            <strong>Позиции:</strong>
             <ul>
               {items.map((it, idx) => {
                 const m = menu.find(x=>x.id===it.menu_item_id) || {};
@@ -164,59 +165,48 @@ export default function App() {
               })}
             </ul>
           </div>
-          <button onClick={handleCreate}>Create order</button>
+          <button onClick={handleCreate}>Создать заказ</button>
         </div>
       )}
 
       {currentTab === 'orders' && (
         <>
           <div className="section">
-            <h3>KDS (active orders)</h3>
+            <h3>Активные заказы</h3>
             <ul>
               {kds.map(o => (
                 <li key={o.id}>
                   #{o.id} status:{o.status} total:{o.total}
                   {(o.phone || o.customer_phone || (o.customer && o.customer.phone)) && <span style={{marginLeft:8}}>phone: {o.phone || o.customer_phone || (o.customer && o.customer.phone)}</span>}
-                  <button style={{marginLeft:8}} onClick={()=>showOrderDetails(o.id)}>Details</button>
+                  <button style={{marginLeft:8}} onClick={()=>showOrderDetails(o.id)}>Детали заказа</button>
                 </li>
               ))}
             </ul>
           </div>
-          <ul>
-            {orders
-              .filter(o => !kds.some(k => k.id === o.id))
-              .map((o) => (
-                <li key={o.id}>
-                  #{o.id} status:{o.status} total:{o.total}
-                  {(o.phone || o.customer_phone || (o.customer && o.customer.phone)) && <span style={{marginLeft:8}}>phone: {o.phone || o.customer_phone || (o.customer && o.customer.phone)}</span>}
-                  <button style={{marginLeft:8}} onClick={()=>showOrderDetails(o.id)}>Details</button>
-                </li>
-              ))}
-          </ul>
         </>
       )}
 
       {currentTab === 'menu' && (
         <div className="section">
-          <h3>Menu</h3>
+          <h3>Меню</h3>
           <div>
-            <input placeholder="name" value={newMenuName} onChange={(e)=>setNewMenuName(e.target.value)} />
-            <input placeholder="price" value={newMenuPrice} onChange={(e)=>setNewMenuPrice(e.target.value)} />
-            <button onClick={handleCreateMenu}>Create menu item</button>
+            <input placeholder="название" value={newMenuName} onChange={(e)=>setNewMenuName(e.target.value)} />
+            <input placeholder="цена" value={newMenuPrice} onChange={(e)=>setNewMenuPrice(e.target.value)} />
+            <button onClick={handleCreateMenu}>Добавить в меню</button>
           </div>
           <ul>
-            {menu.map(m => <li key={m.id}>{m.name} — {m.price}</li>)}
+            {menu.map(m => <li key={m.id}>{m.name} — {m.price} rub</li>)}
           </ul>
         </div>
       )}
 
       {currentTab === 'customers' && (
         <div className="section">
-          <h3>Customers</h3>
+          <h3>Клиенты</h3>
           <div>
-            <input placeholder="name" value={newCustomerName} onChange={(e)=>setNewCustomerName(e.target.value)} />
-            <input placeholder="phone" value={newCustomerPhone} onChange={(e)=>setNewCustomerPhone(e.target.value)} />
-            <button onClick={handleCreateCustomer}>Create customer</button>
+            <input placeholder="Имя" value={newCustomerName} onChange={(e)=>setNewCustomerName(e.target.value)} />
+            <input placeholder="Мобильный телефон" value={newCustomerPhone} onChange={(e)=>setNewCustomerPhone(e.target.value)} />
+            <button onClick={handleCreateCustomer}>Добавить клиента</button>
           </div>
           <ul>
             {customers.map(c => <li key={c.id}>{c.name} — {c.phone} (pts:{c.points})</li>)}
@@ -228,12 +218,12 @@ export default function App() {
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={(e)=>e.stopPropagation()}>
             <button className="modal-close" onClick={closeModal}>×</button>
-            <h3>Order #{selectedOrderDetails.id} details</h3>
-            <div>Status: {selectedOrderDetails.status}</div>
-            <div>Total: {selectedOrderDetails.total}</div>
-            <div>Customer phone: {selectedOrderDetails.customer_phone}</div>
+            <h3>Детали заказа #{selectedOrderDetails.id}</h3>
+            <div>Статус: {selectedOrderDetails.status}</div>
+            <div>Сумма: {selectedOrderDetails.total}</div>
+            <div>Телефон клиента: {selectedOrderDetails.customer_phone}</div>
             <div>
-              Items:
+              Позиции:
               <ul>
                 {(selectedOrderDetails.items||[]).map((it, idx)=> (
                   <li key={idx}>{it.name || it.menu_item_id} x {it.quantity} {it.price ? ` — ${it.price}` : ''}</li>
