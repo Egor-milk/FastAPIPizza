@@ -32,7 +32,21 @@ def get_menu_items(db: Session):
     return db.query(models.MenuItem).all()
 
 def get_orders(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Order).offset(skip).limit(limit).all()
+    stmt2 = (
+        ((select(
+            models.Order.id,
+            models.Order.customer_id,
+            models.Order.status,
+            models.Order.total,
+            models.Customer.phone,
+        )
+          .join(models.Customer, models.Customer.id == models.Order.customer_id))
+         .offset(skip)
+         .limit(limit)
+         )
+    )
+    return db.execute(stmt2).mappings().all()
+    #return db.query(models.Order).offset(skip).limit(limit).all()
 
 def get_order(db: Session, order_id: int):
 
@@ -89,4 +103,15 @@ def create_order(db: Session, order: schemas.OrderCreate):
         raise
 
 def get_active_orders(db: Session):
-    return db.query(models.Order).filter(models.Order.status.in_(['new','preparing'])).all()
+    stmt2 = (
+        ((select(
+            models.Order.id,
+            models.Order.customer_id,
+            models.Order.status,
+            models.Order.total,
+            models.Customer.phone,
+        )
+          .join(models.Customer, models.Customer.id == models.Order.customer_id))
+         .filter(models.Order.status.in_(['new','preparing'])))
+         )
+    return db.execute(stmt2).mappings().all()
