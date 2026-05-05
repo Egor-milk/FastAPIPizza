@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 import models, schemas
+from sqlalchemy import select
 
 def get_customers(db: Session):
     return db.query(models.Customer).all()
@@ -32,6 +33,18 @@ def get_menu_items(db: Session):
 
 def get_orders(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Order).offset(skip).limit(limit).all()
+
+def get_order(db: Session, order_id: int):
+    stmt2 = (
+    ((select(
+        models.OrderItem.id,
+        models.OrderItem.quantity,
+        models.MenuItem.name,
+        models.MenuItem.price
+    )
+     .join(models.MenuItem, models.OrderItem.menu_item_id == models.MenuItem.id))
+     .filter(models.OrderItem.order_id == order_id)))
+    return db.execute(stmt2).mappings().all()
 
 def create_order(db: Session, order: schemas.OrderCreate):
     # validate items exist

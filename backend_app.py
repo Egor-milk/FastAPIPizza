@@ -34,10 +34,13 @@ def create_order(order: schemas.OrderCreate, db: Session = Depends(database.get_
 def list_orders(skip: int = 0, limit: int = 100, db: Session = Depends(database.get_db)):
     return crud.get_orders(db, skip, limit)
 
+@app.get("/orders/{order_id}")
+def get_order(order_id: int, db: Session = Depends(database.get_db)):
+    return crud.get_order(db, order_id)
+
 @app.get("/kds")
 def kds_view(db: Session = Depends(database.get_db)):
     return crud.get_active_orders(db)
-
 
 @app.post('/menu_items', response_model=schemas.MenuItem)
 def create_menu_item(m: schemas.MenuItemCreate, db: Session = Depends(database.get_db)):
