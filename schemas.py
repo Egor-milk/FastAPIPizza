@@ -7,8 +7,9 @@ class IngredientBase(BaseModel):
 
 class Ingredient(IngredientBase):
     id: int
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 class MenuItemBase(BaseModel):
     name: str
@@ -19,8 +20,9 @@ class MenuItemCreate(MenuItemBase):
 
 class MenuItem(MenuItemBase):
     id: int
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 class OrderItemCreate(BaseModel):
     menu_item_id: int
@@ -34,16 +36,18 @@ class OrderItem(BaseModel):
     id: int
     menu_item_id: int
     quantity: int
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 class Order(BaseModel):
     id: int
     customer_id: Optional[int]
     status: str
     total: float
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 class CustomerCreate(BaseModel):
     name: str
@@ -54,5 +58,6 @@ class Customer(BaseModel):
     name: str
     phone: str
     points: int
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }

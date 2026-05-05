@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 import models, schemas
+from sqlalchemy import select, desc
 
 def get_customers(db: Session):
     return db.query(models.Customer).all()
@@ -19,8 +20,6 @@ def create_customer(db: Session, c: schemas.CustomerCreate):
         db.rollback()
         return db.query(models.Customer).filter(models.Customer.phone==c.phone).first()
 
-def list_ingredients(db: Session):
-    return db.query(models.Ingredient).all()
 
 def create_menu_item(db: Session, m: schemas.MenuItemCreate):
     mi = models.MenuItem(name=m.name, price=m.price)
@@ -33,7 +32,33 @@ def get_menu_items(db: Session):
     return db.query(models.MenuItem).all()
 
 def get_orders(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Order).offset(skip).limit(limit).all()
+    stmt2 = (
+        ((select(
+            models.Order.id,
+            models.Order.customer_id,
+            models.Order.status,
+            models.Order.total,
+            models.Customer.phone,
+        )
+          .join(models.Customer, models.Customer.id == models.Order.customer_id))
+         .offset(skip)
+         .limit(limit)
+         )
+    )
+    return db.execute(stmt2).mappings().all()
+
+def get_order(db: Session, order_id: int):
+
+    stmt2 = (
+    ((select(
+        models.OrderItem.id,
+        models.OrderItem.quantity,
+        models.MenuItem.name,
+        models.MenuItem.price
+    )
+     .join(models.MenuItem, models.OrderItem.menu_item_id == models.MenuItem.id))
+     .filter(models.OrderItem.order_id == order_id)))
+    return db.execute(stmt2).mappings().all()
 
 def create_order(db: Session, order: schemas.OrderCreate):
     # validate items exist
@@ -67,12 +92,6 @@ def create_order(db: Session, order: schemas.OrderCreate):
         oi = models.OrderItem(order_id=new_order.id, menu_item_id=it.menu_item_id, quantity=it.quantity)
         db.add(oi)
         total += price * it.quantity
-        # subtract ingredients by recipe (simple)
-        recipes = db.query(models.Recipe).filter(models.Recipe.menu_item_id==it.menu_item_id).all()
-        for r in recipes:
-            ing = db.query(models.Ingredient).filter(models.Ingredient.id==r.ingredient_id).first()
-            if ing:
-                ing.quantity = max(0.0, ing.quantity - r.amount * it.quantity)
     new_order.total = total
     try:
         db.commit()
@@ -83,4 +102,16 @@ def create_order(db: Session, order: schemas.OrderCreate):
         raise
 
 def get_active_orders(db: Session):
-    return db.query(models.Order).filter(models.Order.status.in_(['new','preparing'])).all()
+    stmt2 = (
+        ((select(
+            models.Order.id,
+            models.Order.customer_id,
+            models.Order.status,
+            models.Order.total,
+            models.Customer.phone,
+        )
+          .join(models.Customer, models.Customer.id == models.Order.customer_id))
+         .order_by(desc(models.Order.id))
+         .filter(models.Order.status.in_(['new','preparing'])))
+         )
+    return db.execute(stmt2).mappings().all()
