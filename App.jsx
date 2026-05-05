@@ -68,6 +68,13 @@ export default function App() {
 
   const loadCustomers = () => fetchCustomers().then(setCustomers).catch(console.error);
 
+  // auto-load customers when customers tab is opened (lazy load)
+  React.useEffect(() => {
+    if (currentTab === 'customers' && customers.length === 0) {
+      loadCustomers();
+    }
+  }, [currentTab]);
+
   const handleCreateMenu = () => {
     const price = parseFloat(newMenuPrice) || 0;
     createMenuItem({ name: newMenuName, price })
@@ -210,7 +217,6 @@ export default function App() {
             <input placeholder="name" value={newCustomerName} onChange={(e)=>setNewCustomerName(e.target.value)} />
             <input placeholder="phone" value={newCustomerPhone} onChange={(e)=>setNewCustomerPhone(e.target.value)} />
             <button onClick={handleCreateCustomer}>Create customer</button>
-            <button onClick={loadCustomers}>Load customers</button>
           </div>
           <ul>
             {customers.map(c => <li key={c.id}>{c.name} — {c.phone} (pts:{c.points})</li>)}
