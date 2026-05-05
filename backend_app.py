@@ -38,9 +38,6 @@ def list_orders(skip: int = 0, limit: int = 100, db: Session = Depends(database.
 def kds_view(db: Session = Depends(database.get_db)):
     return crud.get_active_orders(db)
 
-@app.get("/inventory")
-def inventory(db: Session = Depends(database.get_db)):
-    return crud.list_ingredients(db)
 
 @app.post('/menu_items', response_model=schemas.MenuItem)
 def create_menu_item(m: schemas.MenuItemCreate, db: Session = Depends(database.get_db)):
@@ -57,12 +54,6 @@ def list_customers(db: Session = Depends(database.get_db)):
 @app.post("/crm/customers", response_model=schemas.Customer)
 def create_customer(c: schemas.CustomerCreate, db: Session = Depends(database.get_db)):
     return crud.create_customer(db, c)
-
-@app.get("/delivery/eta")
-def delivery_eta(distance_km: float = 5.0):
-    # very simple ETA: base 10 min + 4 min per km
-    eta_min = 10 + 4 * distance_km
-    return {"eta_minutes": int(eta_min)}
 
 if __name__ == "__main__":
     uvicorn.run("backend_app:app", host="0.0.0.0", port=8000, reload=True)

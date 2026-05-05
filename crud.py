@@ -19,8 +19,6 @@ def create_customer(db: Session, c: schemas.CustomerCreate):
         db.rollback()
         return db.query(models.Customer).filter(models.Customer.phone==c.phone).first()
 
-def list_ingredients(db: Session):
-    return db.query(models.Ingredient).all()
 
 def create_menu_item(db: Session, m: schemas.MenuItemCreate):
     mi = models.MenuItem(name=m.name, price=m.price)
@@ -67,12 +65,6 @@ def create_order(db: Session, order: schemas.OrderCreate):
         oi = models.OrderItem(order_id=new_order.id, menu_item_id=it.menu_item_id, quantity=it.quantity)
         db.add(oi)
         total += price * it.quantity
-        # subtract ingredients by recipe (simple)
-        recipes = db.query(models.Recipe).filter(models.Recipe.menu_item_id==it.menu_item_id).all()
-        for r in recipes:
-            ing = db.query(models.Ingredient).filter(models.Ingredient.id==r.ingredient_id).first()
-            if ing:
-                ing.quantity = max(0.0, ing.quantity - r.amount * it.quantity)
     new_order.total = total
     try:
         db.commit()
